@@ -1,0 +1,481 @@
+#!/usr/bin/env python3
+from os import environ
+import re
+try:
+    basestring
+except NameError:
+    basestring = str
+
+class Attr(object):
+
+    def name(self):
+        return self.__n__
+
+    def parent(self):
+        return self.__p__
+
+    def str(self):
+        return "<Meta>Attribute in '%s': %s = %s" % (self.parent(),self.name(),self.value())
+
+    def value(self,x=None):
+        if x is None:
+            return self.__v__
+        else:
+            if hasattr(x, 'str') and callable(getattr(x, 'str')):
+                pass
+                #print("<Meta>Attribute in '%s': %s = %s" % (self.parent(),self.name(),x.str()))
+            else:
+                pass
+                #print("<Meta>Attribute in '%s': %s = %s" % (self.parent(),self.name(),x))
+            self.__v__=x
+        return self.__c__
+
+    def __init__(self,fromClass=None,parentName='NoParent',attrName='NoName',value=None):
+        if fromClass is not None:
+            self.__c__=fromClass
+        else:
+            self.__c__=self
+        self.__v__=None
+        self.__n__=attrName
+        self.__p__=parentName
+        if value is not None:
+            self.value(value)
+
+class UniqueList(object):
+
+    def has(self,x):
+        return x in self.__l__
+
+    def list(self,value=None,rstrip=False,lstrip=False,allow_empty=False):
+        x=value
+        if x is None:
+            return self.__l__
+        elif x not in self.__l__:
+            if hasattr(x, 'str') and callable(getattr(x, 'str')):
+                pass
+                #print("<Meta>UniqueList '%s': append ( %s )" % (self.name(),x.str()))
+            else:
+                pass
+                #print("<Meta>UniqueList '%s': append ( %s )" % (self.name(),str(x)))
+            if isinstance(x,list):
+                for l in x:
+                    if isinstance(l,basestring):
+                        if not allow_empty and l.strip()!='':
+                            if rstrip:
+                                l=l.rstrip()
+                            elif lstrip:
+                                l=l.lstrip()
+                            self.__l__.append(l)
+                        print("<Meta>List '%s': append ( %s )" % (self.name(),str(l)))
+                    else:
+                        self.__l__.append(l)
+            else:
+                self.__l__.append(x)
+            #print(self.str())
+        return self.__c__
+
+    def name(self):
+        return self.n.value()
+
+    def reset(self):
+        self.__l__=[]
+        return self.__c__
+
+    def str(self):
+        if hasattr(self.__l__[0], 'str') and callable(getattr(self.__l__[0], 'str')):
+            r=[]
+            for n in self.__l__:
+                r.append(n.str())
+            return self.name() + ' = [ '+' , '.join(r)+' ]'
+        else:
+            r=[]
+            for n in self.__l__:
+                r.append(str(n))
+            return self.name() + ' = [ '+' , '.join(r)+' ]'
+
+    def __init__(self,fromClass=None,parentName='NoParent',name=None):
+        self.n=Attr(fromClass=fromClass,attrName="name",value=name,parentName='<Meta>UniqueList')
+        self.p=Attr(fromClass=fromClass,attrName="parentName",value=parentName,parentName='<Meta>UniqueList')
+        if fromClass is not None:
+            self.__c__=fromClass
+        else:
+            self.__c__=self
+        self.reset()
+
+class List(object):
+
+    def has(self,x):
+        return x in self.__l__
+
+    def list(self,value=None,rstrip=False):
+        x=value
+        if x is None:
+            return self.__l__
+        else:
+            if hasattr(x, 'str') and callable(getattr(x, 'str')):
+                pass
+                #print("<Meta>List '%s': append ( %s )" % (self.name(),x.str()))
+            else:
+                pass
+                #print("<Meta>List '%s': append ( %s )" % (self.name(),str(x)))
+            if isinstance(x,list):
+                for l in x:
+                    if isinstance(l,basestring) and rstrip:
+                        self.__l__.append(l.rstrip())
+                    else:
+                        self.__l__.append(l)
+                    #print("<Meta>List '%s': append ( %s )" % (self.name(),str(m)))
+            else:
+                self.__l__.append(x)
+        return self.__c__
+
+    def name(self):
+        return self.n.value()
+
+    def reset(self):
+        self.__l__=[]
+        return self.__c__
+
+    def str(self):
+        if hasattr(self.__l__[0], 'str') and callable(getattr(self.__l__[0], 'str')):
+            r=[]
+            for n in self.__l__:
+                r.append(n.str())
+            return self.name() + ' = [ '+' , '.join(r)+' ]'
+        else:
+            r=[]
+            for n in self.__l__:
+                r.append(str(n))
+            return self.name() + ' = [ '+' , '.join(r)+' ]'
+
+    def __init__(self,fromClass=None,parentName='NoParent',name=None):
+        self.n=Attr(fromClass=fromClass,attrName="name",value=name,parentName='<Meta>List')
+        self.p=Attr(fromClass=fromClass,attrName="parentName",value=parentName,parentName='<Meta>List')
+        if fromClass is not None:
+            self.__c__=fromClass
+        else:
+            self.__c__=self
+        self.reset()
+
+class Transition(object):
+
+    def From(self,x=None):
+        return self.f.value(x)
+
+    def name(self,x=None):
+        return self.n.value(x)
+
+    def str(self):
+        return "<Meta>Transition '%s': %s -> %s" % (self.name(),self.From(),self.to())
+
+    def to(self,x=None):
+        return self.t.value(x)
+
+    def __init__(self,fromClass=None,name='',From='',to=''):
+        if fromClass is not None:
+            self.__c__=fromClass
+        else:
+            self.__c__=self
+        self.n=Attr(attrName='name',fromClass=self.__c__,value=name,parentName='<Meta>Transition')
+        self.f=Attr(attrName='from',fromClass=self.__c__,value=From,parentName='<Meta>Transition')
+        self.t=Attr(attrName='to',fromClass=self.__c__,value=to,parentName='<Meta>Transition')
+
+class FiniteStateMachine(object):
+
+    def action(self,name=None,func=None):
+        if name is None:
+            cname='%sAction' % self.state()
+            if hasattr(self,cname) and callable(getattr(self,cname)):
+                self.__dict__[cname]()
+            else:
+                #print('%s no action' % cname)
+                pass
+        elif self.u.has(name):
+            if func is None:
+                cname='%sAction' % self.state()
+                if hasattr(self,cname) and callable(getattr(self,cname)):
+                    self.__dict__[cname]()
+                    #print('call %s ' % cname)
+                elif hasattr(self,name) and callable(getattr(self,name)):
+                    self.__dict__[name]()
+                    #print('call %s ' % name)
+            else:
+                cname='%sAction' % name
+                if hasattr(self,cname):
+                    #print('Cannot rebind the method %s!' % cname)
+                    pass
+                else:
+                    self.__dict__[cname]=func.__get__(self)
+                    #print('%s ok' % cname)
+        else:
+            if func is None:
+                if hasattr(self,name) and callable(getattr(self,name)):
+                    self.__dict__[name]()
+            else:
+                if hasattr(self,name):
+                    pass
+                    #print("%s Wrong" % name)
+                else:
+                    self.__dict__[name]=func.__get__(self)
+                    #print('%s ok' % name)
+
+    def before(self,name,func):
+        if self.m.has(name):
+            cname='before%s' % name.capitalize()
+            if hasattr(self,cname):
+                pass
+                #print('Cannot rebind the method %s!' % cname)
+            else:
+                self.__dict__[cname]=func.__get__(self)
+                #print('%s ok' % name)
+        else:
+            pass
+            #print('wrong')
+
+    def list(self,name,value=None,rstrip=False):
+        if hasattr(self,name):
+            if callable(getattr(self,name)):
+                return self.__dict__[name](value,rstrip)
+            else:
+                pass
+                #print('%s Wrong' % name)
+        else:
+            private='__%s__' % name
+            self.__dict__[private]=List(fromClass=self.__c__,name=name,parentName='<Meta>FiniteStateMachine')
+            def list(self,value=None,rstrip=False):
+                return self.__dict__[private].list(value=value,rstrip=rstrip)
+            self.__dict__[name]=list.__get__(self)
+            self.__dict__[name](value,rstrip)
+            def reset(self):
+                return self.__dict__[private].reset()
+            self.__dict__['reset_%s' % name]=reset.__get__(self)
+
+    def method(self,x=None):
+        return self.e.value(x)
+
+    def methods(self):
+        return self.m.list()
+
+    def property(self,name,value=None,protected=True):
+        if hasattr(self,name):
+            if callable(getattr(self,name)):
+                return self.__dict__[name](value)
+            else:
+                pass
+                #print('%s Wrong' % name)
+        else:
+            private='__%s__' % name
+            self.__dict__[private]=Attr(fromClass=self.__c__,attrName=name,parentName='<Meta>FiniteStateMachine')
+            def property(self,value=None):
+                return self.__dict__[private].value(value)
+            def protected_property(self):
+                return self.__dict__[private].value()
+            if protected:
+                self.__dict__[name]=protected_property.__get__(self)
+                self.__dict__[private].value(value)
+            else:
+                self.__dict__[name]=property.__get__(self)
+                self.__dict__[name](value)
+            #print('%s Ok' % name)
+
+    def states(self):
+        return self.u.list()
+
+    def state(self,x=None):
+        if x is None:
+            return self.s.value()
+        if self.u.has(x):
+            if self.s.value() is None or self.s.value()=='':
+                self.s.value(x)
+            else:
+                print("Initial state set to '%s' already!" % self.s.value())
+        else:
+            print("State '%s' not in lists!" % self.s.value())
+        return self
+
+    def transition(self,name='',From='',to=''):
+        if name=='' and From=='' and to=='':
+            return self.t.str()
+        else:
+            self.t.list(Transition(fromClass=self.__c__,name=name,From=From,to=to))
+            self.m.list(name)
+            self.u.list(From)
+            self.u.list(to)
+            def foo(self):
+                self.method(name)
+                if self.state()==From:
+                    cname='before%s' % name.capitalize()
+                    if hasattr(self,cname) and callable(getattr(self,cname)):
+                        self.__dict__[cname]()
+                    else:
+                        pass
+                    self.s.value(to)
+                    #print('%s!' % name)
+                    cname='on%s' % name.capitalize()
+                    if hasattr(self,cname) and callable(getattr(self,cname)):
+                        self.__dict__[cname]()
+                    else:
+                        pass
+                        #print('%s not found in object' % cname)
+                elif hasattr(self,'onError') and callable(getattr(self,'onError')):
+                    self.onError()
+                else:
+                    pass
+                    #print('Current state: %s! Cannot %s' % (self.state(),self.method()))   
+            self.__dict__[name]=foo.__get__(self)
+
+    def on(self,name,func):
+        if self.m.has(name) or name=='error':
+            cname='on%s' % name.capitalize()
+            if hasattr(self,cname):
+                pass
+                #print('Cannot rebind the method %s!' % cname)
+            else:
+                self.__dict__[cname]=func.__get__(self)
+                #print('%s ok' % name)
+        else:
+            pass
+            #print('wrong')
+
+    def __init__(self,fromClass=None):
+        if fromClass is not None:
+            self.__c__=fromClass
+        else:
+            self.__c__=self
+        self.m=UniqueList(fromClass=self.__c__,name='methods',parentName='<Meta>FiniteStateMachine')
+        self.s=Attr(fromClass=self.__c__,attrName='state',parentName='<Meta>FiniteStateMachine')
+        self.e=Attr(fromClass=self.__c__,attrName='method',parentName='<Meta>FiniteStateMachine')
+        self.t=List(fromClass=self.__c__,name='transitions',parentName='<Meta>FiniteStateMachine')
+        self.u=UniqueList(fromClass=self.__c__,name='states',parentName='<Meta>FiniteStateMachine')
+
+class FSMExample:
+
+    def __init__(self):
+
+        def eof(self):
+            if self.line_num() >= self.line_total():
+                self.last_line()
+            return self.state()=='line_end'
+
+        def get_line(self):
+            if self.eof():
+                return False
+            else:
+                n=self.line_num()
+                self.line(self.file_content()[n])
+                self.line_num(n+1)
+            return self.line()
+
+        def print_line(self):
+            if self.eof():
+                return False
+            else:
+                print(self.get_line())
+            return
+
+        def read_file(self):
+            self.reset_file_content()
+            fp=open(self.file_path(),'r')
+            self.file_content(fp.readlines(),rstrip=True)
+            self.line_total(len(self.file_content()))
+            fp.close()
+
+        def parse_file(self):
+            self.read_file()
+            for l in self.file_content():
+                self.action()
+
+        def line_read(self):
+            self.get_line()
+            self.tokenize()
+            self.action()
+
+        def line_parsed(self):
+            self.reset_line_content()
+            l=self.line()
+            if l.strip()!='':
+                t=l.lstrip()
+                s=len(l)-len(t)
+                if t.startswith('class '):
+                    u=t[6:].strip()
+                    if '(' not in u:
+                        w=[u,'(','','):']
+                    elif '():' in u:
+                        w=[u.split('(')[0]]
+                        w.append('(')
+                        w.append('')
+                        w.append('):')
+                    else:
+                        w=u.split('(')
+                        w.insert(1,'(')
+                        w[len(w)-1]=w[len(w)-1].split(')')[0]
+                        w.append('):')
+                    print('|%4d|%s|class|%s|%s|%s|%s' % (s,' ' * s,w[0],w[1],w[2],w[3]))
+                    self.line_content([s,' ' * s,'class',w[0],w[1],w[2],w[3]])
+                elif t.startswith('def '):
+                    u=t[4:].strip()
+                    if '(' not in u:
+                        w=[u,'(','','):']
+                    elif '():' in u:
+                        w=[u.split('(')[0]]
+                        w.append('(')
+                        w.append('')
+                        w.append('):')
+                    else:
+                        w=u.split('(')
+                        w.insert(1,'(')
+                        w[len(w)-1]=w[len(w)-1].split(')')[0]
+                        w.append('):')
+                    print('|%4d|%s|def|%s|%s|%s|%s' % (s,' ' * s,w[0],w[1],w[2],w[3]))
+                    self.line_content([s,' ' * s,'def',w[0],w[1],w[2],w[3]])
+                elif t.startswith('if '):
+                    print('|%4d|%s|if|%s' % (s,' ' * s, t[3:].strip()))
+                    self.line_content([s,' ' * s,'if',t[3:].strip()])
+                elif t.startswith('else:') or t.startswith('else '):
+                    print('|%4d|%s|else|' % (s,' ' * s))
+                    self.line_content([s,' ' * s,'else:',t[5:].strip()])
+                elif t.startswith('with '):
+                    print('|%4d|%s|with|%s' % (s,' ' * s, t[5:].strip()))
+                    self.line_content([s,' ' * s,'elif',t[5:].strip()])
+                elif t.startswith('elif '):
+                    print('|%4d|%s|elif|%s' % (s,' ' * s, t[5:].strip()))
+                    self.line_content([s,' ' * s,'elif',t[5:].strip()])
+                elif t.startswith('for '):
+                    print('|%4d|%s|for|%s' % (s,' ' * s, t[4:].strip()))
+                    self.line_content([s,' ' * s,'for',t[4:].strip()])
+                elif t.startswith('while '):
+                    print('|%4d|%s|while|%s' % (s,' ' * s, t[6:].strip()))
+                    self.line_content([s,' ' * s,'while',t[6:].strip()])
+                else:
+                    print('|%4d|%s|%s' % (s,' ' * s,t))
+                    self.line_content([s,' ' * s,t])
+            else:
+                print()
+            if not self.eof():
+                self.next_line()
+
+        fm=FiniteStateMachine()
+        fm.property('file_path',value='sample.py',protected=False)
+        fm.property('line',value='',protected=False)
+        fm.property('previous_line',value='',protected=False)
+        fm.property('line_num',value=0,protected=False)
+        fm.property('line_total',value=0,protected=False)
+        fm.list('line_content')
+        fm.list('file_content',rstrip=True)
+        fm.transition(name='start_parse',From='start',to='line_read')
+        fm.transition(name='tokenize',From='line_read',to='line_parsed')
+        fm.transition(name='next_line',From='line_parsed',to='line_read')
+        fm.transition(name='last_line',From='line_read',to='line_end')
+        fm.state('start')
+        fm.action('eof',eof)
+        fm.action('get_line',get_line)
+        fm.action('print_line',print_line)
+        fm.action('read_file',read_file)
+        fm.action('line_parsed',line_parsed)
+        fm.action('line_read',line_read)
+
+        fm.on('start_parse',parse_file)
+        fm.start_parse()
+
+if __name__ == '__main__':
+    fsmexample=FSMExample()
